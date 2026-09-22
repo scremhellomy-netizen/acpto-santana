@@ -1,0 +1,7 @@
+@"
+1 - Acpto de ordens - Santana.xlsx
+*.xlsx
+__pycache__/
+*.pyc
+.vscode/
+"@ | Set-Content .gitignore -Encoding UTF8

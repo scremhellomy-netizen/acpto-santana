@@ -1,0 +1,51 @@
+{
+  "atualizado_em": "2026-09-22T21:39:28.747740+00:00",
+  "arquivo_origem": "1 - Acpto de ordens - Santana(1).xlsx",
+  "caminho_origem": "/mnt/data/source_current/1 - Acpto de ordens - Santana(1).xlsx",
+  "aba_origem": "Principal",
+  "ultima_modificacao_arquivo": "2026-09-22T21:31:44.769988+00:00",
+  "registros": 25989,
+  "unidades": 68225.0,
+  "devolucoes": 323,
+  "datas_validas": 25989,
+  "responsaveis": 53,
+  "transportadoras": 2,
+  "status_distintos": 10,
+  "tipos_operacao_distintos": 35,
+  "colunas_origem": 86,
+  "arquivo_dados": "ordens_santana.json.gz",
+  "observacao": "Somente a aba Principal é considerada. As demais abas, inclusive ocultas, são ignoradas.",
+  "validacao": {
+    "estrutura_ok": true,
+    "json_reaberto_com_sucesso": true,
+    "registros_json": 25989,
+    "datas_validas": 25989,
+    "datas_invalidas": 0,
+    "quantidades_invalidas": 0,
+    "linhas_em_ordens_duplicadas": 0,
+    "avisos": [
+      "K - Quantidade: 1,058 células vazias."
+    ]
+  },
+  "mapeamento": {
+    "A": "tipo_operacao",
+    "B": "ordem",
+    "D": "segmento",
+    "H": "canal_digital",
+    "I": "data_criacao",
+    "L": "status",
+    "M": "cliente",
+    "O": "transportadora",
+    "P": "condicao_entrega",
+    "AQ": "estado",
+    "AU": "devolucao",
+    "AD": "deposito",
+    "K": "quantidade",
+    "BA": "dia",
+    "BB": "mes",
+    "BC": "ano",
+    "BD": "mes_mapa",
+    "CB": "canal",
+    "CH": "responsavel"
+  }
+}
