@@ -573,6 +573,17 @@ select:focus{
         grid-template-columns:1fr
     }
 }
+
+/* Filtros com seleção múltipla */
+.filters select[multiple]{
+    min-height: 38px;
+    cursor: pointer;
+}
+
+.filters select[multiple] option:checked{
+    font-weight: 700;
+}
+
 </style>
 </head>
 
@@ -623,7 +634,7 @@ Fonte: carregando dados...
 
 <div class="filters">
 
-<select id="segmento">
+<select id="segmento" multiple size="1">
 <option value="">Todas as segmentações</option>
 </select>
 
@@ -631,7 +642,7 @@ Fonte: carregando dados...
 <option value="">Todos os canais digitais</option>
 </select>
 
-<select id="tipoOperacao">
+<select id="tipoOperacao" multiple size="1">
 <option value="">Todos os tipos de operação</option>
 </select>
 
@@ -647,11 +658,11 @@ Fonte: carregando dados...
 <option value="">Todas as condições de entrega</option>
 </select>
 
-<select id="status">
+<select id="status" multiple size="1">
 <option value="">Todos os status do pedido</option>
 </select>
 
-<select id="depositoLogico">
+<select id="depositoLogico" multiple size="1">
 <option value="">Todos os depósitos lógicos</option>
 </select>
 
@@ -659,7 +670,7 @@ Fonte: carregando dados...
 <option value="">Todos os tipos de devolução</option>
 </select>
 
-<select id="responsavel">
+<select id="responsavel" multiple size="1">
 <option value="">Todos os responsáveis</option>
 </select>
 
@@ -1079,6 +1090,14 @@ function populateSelect(id,values){
 
 function setupFilters(previousFilters = {}){
 
+    const multiFilterIds = new Set([
+        'segmento',
+        'tipoOperacao',
+        'status',
+        'depositoLogico',
+        'responsavel'
+    ]);
+
     populateSelect(
         'segmento',
         uniqueSorted(
@@ -1162,12 +1181,6 @@ function setupFilters(previousFilters = {}){
         )
     );
 
-
-    /*
-     * Restaura os filtros que estavam
-     * selecionados antes da atualização.
-     */
-
     document
         .querySelectorAll(
             '.filters select'
@@ -1180,32 +1193,52 @@ function setupFilters(previousFilters = {}){
                 ];
 
             if(
-                previousValue &&
-                Array.from(
-                    select.options
-                ).some(
-                    option =>
-                        option.value ===
-                        previousValue
+                multiFilterIds.has(
+                    select.id
                 )
             ){
 
-                select.value =
-                    previousValue;
+                const values =
+                    Array.isArray(
+                        previousValue
+                    )
+                        ? previousValue
+                        : (
+                            previousValue
+                                ? [previousValue]
+                                : []
+                        );
+
+                Array.from(
+                    select.options
+                ).forEach(option => {
+                    option.selected =
+                        values.includes(
+                            option.value
+                        );
+                });
 
             }else{
 
-                select.value = '';
+                if(
+                    previousValue &&
+                    Array.from(
+                        select.options
+                    ).some(
+                        option =>
+                            option.value ===
+                            previousValue
+                    )
+                ){
+                    select.value =
+                        previousValue;
+                }else{
+                    select.value = '';
+                }
 
             }
 
         });
-
-
-    /*
-     * Evita duplicação dos eventos
-     * dos filtros.
-     */
 
     document
         .querySelectorAll(
@@ -1232,77 +1265,131 @@ function applyFilters(){
 
     const f = {};
 
+    const multiFilterIds = new Set([
+        'segmento',
+        'tipoOperacao',
+        'status',
+        'depositoLogico',
+        'responsavel'
+    ]);
+
     document
         .querySelectorAll(
             '.filters select'
         )
-        .forEach(
-            e =>
-                f[e.id] = e.value
-        );
+        .forEach(e => {
+
+            if(
+                multiFilterIds.has(
+                    e.id
+                )
+            ){
+                f[e.id] =
+                    Array.from(
+                        e.selectedOptions
+                    )
+                    .map(
+                        option =>
+                            option.value
+                    )
+                    .filter(
+                        value =>
+                            value !== ''
+                    );
+            }else{
+                f[e.id] =
+                    e.value;
+            }
+
+        });
 
     filtered =
         allRows.filter(r => {
 
             return (
 
-                (!f.segmento ||
-                    r.segmento ===
-                    f.segmento)
+                (
+                    !f.segmento.length ||
+                    f.segmento.includes(
+                        r.segmento
+                    )
+                )
 
                 &&
 
-                (!f.canalDigital ||
+                (
+                    !f.canalDigital ||
                     r.canalDigital ===
-                    f.canalDigital)
+                    f.canalDigital
+                )
 
                 &&
 
-                (!f.tipoOperacao ||
-                    r.tipoOperacao ===
-                    f.tipoOperacao)
+                (
+                    !f.tipoOperacao.length ||
+                    f.tipoOperacao.includes(
+                        r.tipoOperacao
+                    )
+                )
 
                 &&
 
-                (!f.mes ||
+                (
+                    !f.mes ||
                     r.mesMapa ===
-                    f.mes)
+                    f.mes
+                )
 
                 &&
 
-                (!f.transportadora ||
+                (
+                    !f.transportadora ||
                     r.transportadora ===
-                    f.transportadora)
+                    f.transportadora
+                )
 
                 &&
 
-                (!f.condicaoEntrega ||
+                (
+                    !f.condicaoEntrega ||
                     r.condicaoEntrega ===
-                    f.condicaoEntrega)
+                    f.condicaoEntrega
+                )
 
                 &&
 
-                (!f.status ||
-                    r.status ===
-                    f.status)
+                (
+                    !f.status.length ||
+                    f.status.includes(
+                        r.status
+                    )
+                )
 
                 &&
 
-                (!f.depositoLogico ||
-                    r.depositoLogico ===
-                    f.depositoLogico)
+                (
+                    !f.depositoLogico.length ||
+                    f.depositoLogico.includes(
+                        r.depositoLogico
+                    )
+                )
 
                 &&
 
-                (!f.devolucao ||
+                (
+                    !f.devolucao ||
                     r.devolucao ===
-                    f.devolucao)
+                    f.devolucao
+                )
 
                 &&
 
-                (!f.responsavel ||
-                    r.responsavel ===
-                    f.responsavel)
+                (
+                    !f.responsavel.length ||
+                    f.responsavel.includes(
+                        r.responsavel
+                    )
+                )
 
             );
 
@@ -1321,10 +1408,34 @@ function clearFilters(){
         .querySelectorAll(
             '.filters select'
         )
-        .forEach(
-            e =>
-                e.value = ''
-        );
+        .forEach(e => {
+
+            if(
+                [
+                    'segmento',
+                    'tipoOperacao',
+                    'status',
+                    'depositoLogico',
+                    'responsavel'
+                ].includes(
+                    e.id
+                )
+            ){
+
+                Array.from(
+                    e.options
+                ).forEach(
+                    option =>
+                        option.selected = false
+                );
+
+            }else{
+
+                e.value = '';
+
+            }
+
+        });
 
     applyFilters();
 
@@ -1333,6 +1444,9 @@ function clearFilters(){
 
 /* =========================================================
    GRÁFICOS
+   ========================================================= */
+
+
    ========================================================= */
 
 function commonScales(){
