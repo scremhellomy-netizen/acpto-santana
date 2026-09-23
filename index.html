@@ -152,6 +152,132 @@ select:focus{
     box-shadow:0 0 0 2px rgba(4,100,252,.14)
 }
 
+/* =========================================================
+   MULTI-SELEÇÃO — COMPONENTE VISUAL
+   ========================================================= */
+.filters .multi-select{
+    position:relative;
+    width:100%;
+    min-width:0;
+    z-index:20
+}
+
+.filters select.multi-source{
+    display:none!important
+}
+
+.multi-select-control{
+    width:100%;
+    height:43px;
+    border:1px solid var(--border);
+    border-radius:9px;
+    background:var(--panel);
+    color:var(--text);
+    padding:0 13px;
+    outline:none;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    font:inherit;
+    text-align:left
+}
+
+.multi-select-control:hover,
+.multi-select.open .multi-select-control{
+    border-color:var(--accent);
+    box-shadow:0 0 0 2px rgba(4,100,252,.14)
+}
+
+.multi-select-arrow{
+    flex:0 0 auto;
+    color:var(--muted);
+    font-size:12px;
+    transition:transform .15s ease
+}
+
+.multi-select.open .multi-select-arrow{
+    transform:rotate(180deg)
+}
+
+.multi-select-menu{
+    display:none;
+    position:absolute;
+    top:calc(100% + 6px);
+    left:0;
+    right:0;
+    max-height:300px;
+    overflow-y:auto;
+    padding:6px;
+    background:var(--panel);
+    color:var(--text);
+    border:1px solid var(--border);
+    border-radius:9px;
+    box-shadow:0 14px 30px rgba(0,0,0,.35);
+    z-index:9999
+}
+
+.multi-select.open .multi-select-menu{
+    display:block
+}
+
+.multi-option{
+    display:flex;
+    align-items:center;
+    gap:9px;
+    width:100%;
+    min-height:34px;
+    padding:7px 8px;
+    border-radius:6px;
+    color:var(--text);
+    background:transparent;
+    cursor:pointer;
+    font-size:12px;
+    user-select:none
+}
+
+.multi-option:hover{
+    background:rgba(4,100,252,.12)
+}
+
+.multi-option input{
+    width:15px;
+    height:15px;
+    margin:0;
+    accent-color:var(--accent);
+    cursor:pointer;
+    flex:0 0 auto
+}
+
+.multi-option span{
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap
+}
+
+.multi-select-empty{
+    padding:9px;
+    color:var(--muted);
+    font-size:12px
+}
+
+@media(max-width:900px){
+    .multi-select-menu{
+        max-height:240px
+    }
+}
+
+.filters select option{
+    background:var(--panel);
+    color:var(--text)
+}
+
+.filters select option:checked{
+    background:var(--accent);
+    color:#fff
+}
+
 .filter-actions{
     display:flex;
     gap:10px;
@@ -225,6 +351,12 @@ select:focus{
 
 .chart-card.wide{
     min-height:350px
+}
+
+/* Ranking de responsáveis deve ocupar a mesma largura das tabelas abaixo. */
+.chart-card.ranking-wide{
+    grid-column:1 / -1;
+    width:100%;
 }
 
 .chart-title{
@@ -570,13 +702,14 @@ select:focus{
 
 /* Filtros com seleção múltipla */
 .filters select[multiple]{
-    min-height:38px;
-    cursor:pointer;
+    min-height: 38px;
+    cursor: pointer;
 }
 
 .filters select[multiple] option:checked{
-    font-weight:700;
+    font-weight: 700;
 }
+
 </style>
 </head>
 
@@ -777,7 +910,7 @@ Ordens por Nome2, considerado como transportadora conforme regra definida
 
 </div>
 
-<div class="card chart-card wide">
+<div class="card chart-card ranking-wide">
 
 <div class="chart-title">
 Ranking de responsáveis
@@ -1077,11 +1210,155 @@ function populateSelect(id,values){
 }
 
 
+
+const MULTI_FILTER_IDS = new Set([
+    'segmento',
+    'tipoOperacao',
+    'status',
+    'depositoLogico',
+    'responsavel'
+]);
+
+function updateMultiSelect(select){
+
+    const wrapper = select.closest('.multi-select');
+    if(!wrapper){
+        return;
+    }
+
+    const button = wrapper.querySelector('.multi-select-control');
+    const menu = wrapper.querySelector('.multi-select-menu');
+    if(!button || !menu){
+        return;
+    }
+
+    menu.innerHTML = '';
+
+    const options = Array.from(select.options)
+        .filter(option => option.value !== '');
+
+    if(!options.length){
+        const empty = document.createElement('div');
+        empty.className = 'multi-select-empty';
+        empty.textContent = 'Nenhuma opção disponível';
+        menu.appendChild(empty);
+    }else{
+        options.forEach(option => {
+
+            const label = document.createElement('label');
+            label.className = 'multi-option';
+
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.checked = option.selected;
+            checkbox.value = option.value;
+
+            const text = document.createElement('span');
+            text.textContent = option.textContent;
+
+            checkbox.addEventListener('change', () => {
+                option.selected = checkbox.checked;
+                updateMultiSelect(select);
+                applyFilters();
+            });
+
+            label.appendChild(checkbox);
+            label.appendChild(text);
+            menu.appendChild(label);
+        });
+    }
+
+    const selected = Array.from(select.selectedOptions)
+        .filter(option => option.value !== '');
+
+    const firstText =
+        select.options[0]?.textContent || 'Selecionar';
+
+    // Quando nenhuma opção estiver marcada, mantém o título padrão
+    // do filtro (ex.: "Todas as segmentações",
+    // "Todos os tipos de operação", etc.).
+    // Somente altera o título quando houver seleção.
+    const summary =
+        selected.length === 0
+            ? firstText
+            : selected.length === 1
+                ? '1 selecionado'
+                : `${selected.length} selecionados`;
+
+    button.querySelector('.multi-select-label').textContent = summary;
+}
+
+function initMultiSelect(select){
+
+    if(select.dataset.multiReady === 'true'){
+        updateMultiSelect(select);
+        return;
+    }
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'multi-select';
+
+    select.parentNode.insertBefore(wrapper, select);
+    wrapper.appendChild(select);
+    select.classList.add('multi-source');
+    select.dataset.multiReady = 'true';
+
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'multi-select-control';
+
+    const label = document.createElement('span');
+    label.className = 'multi-select-label';
+
+    const arrow = document.createElement('span');
+    arrow.className = 'multi-select-arrow';
+    arrow.textContent = '⌄';
+
+    button.appendChild(label);
+    button.appendChild(arrow);
+
+    const menu = document.createElement('div');
+    menu.className = 'multi-select-menu';
+
+    wrapper.appendChild(button);
+    wrapper.appendChild(menu);
+
+    button.addEventListener('click', event => {
+        event.stopPropagation();
+
+        document.querySelectorAll('.multi-select.open')
+            .forEach(other => {
+                if(other !== wrapper){
+                    other.classList.remove('open');
+                }
+            });
+
+        wrapper.classList.toggle('open');
+    });
+
+    updateMultiSelect(select);
+}
+
+function initAllMultiSelects(){
+    MULTI_FILTER_IDS.forEach(id => {
+        const select = $(id);
+        if(select){
+            initMultiSelect(select);
+        }
+    });
+}
+
+document.addEventListener('click', () => {
+    document.querySelectorAll('.multi-select.open')
+        .forEach(wrapper => wrapper.classList.remove('open'));
+});
+
 /* =========================================================
    FILTROS
    ========================================================= */
 
 function setupFilters(previousFilters = {}){
+
     const multiFilterIds = new Set([
         'segmento',
         'tipoOperacao',
@@ -1173,20 +1450,27 @@ function setupFilters(previousFilters = {}){
         )
     );
 
-    /*
-     * Restaura os filtros anteriores.
-     * Para filtros múltiplos, previousFilters[id]
-     * é tratado como uma lista de valores.
-     */
     document
-        .querySelectorAll('.filters select')
+        .querySelectorAll(
+            '.filters select'
+        )
         .forEach(select => {
-            const previousValue =
-                previousFilters[select.id];
 
-            if(multiFilterIds.has(select.id)){
+            const previousValue =
+                previousFilters[
+                    select.id
+                ];
+
+            if(
+                multiFilterIds.has(
+                    select.id
+                )
+            ){
+
                 const values =
-                    Array.isArray(previousValue)
+                    Array.isArray(
+                        previousValue
+                    )
                         ? previousValue
                         : (
                             previousValue
@@ -1204,6 +1488,7 @@ function setupFilters(previousFilters = {}){
                 });
 
             }else{
+
                 if(
                     previousValue &&
                     Array.from(
@@ -1219,15 +1504,26 @@ function setupFilters(previousFilters = {}){
                 }else{
                     select.value = '';
                 }
+
             }
+
         });
 
-    /*
-     * Evita duplicação dos eventos.
-     */
+    initAllMultiSelects();
+
+    MULTI_FILTER_IDS.forEach(id => {
+        const select = $(id);
+        if(select){
+            updateMultiSelect(select);
+        }
+    });
+
     document
-        .querySelectorAll('.filters select')
+        .querySelectorAll(
+            '.filters select'
+        )
         .forEach(select => {
+
             select.removeEventListener(
                 'change',
                 applyFilters
@@ -1237,11 +1533,14 @@ function setupFilters(previousFilters = {}){
                 'change',
                 applyFilters
             );
+
         });
+
 }
 
 
 function applyFilters(){
+
     const f = {};
 
     const multiFilterIds = new Set([
@@ -1253,9 +1552,16 @@ function applyFilters(){
     ]);
 
     document
-        .querySelectorAll('.filters select')
+        .querySelectorAll(
+            '.filters select'
+        )
         .forEach(e => {
-            if(multiFilterIds.has(e.id)){
+
+            if(
+                multiFilterIds.has(
+                    e.id
+                )
+            ){
                 f[e.id] =
                     Array.from(
                         e.selectedOptions
@@ -1272,11 +1578,14 @@ function applyFilters(){
                 f[e.id] =
                     e.value;
             }
+
         });
 
     filtered =
         allRows.filter(r => {
+
             return (
+
                 (
                     !f.segmento.length ||
                     f.segmento.includes(
@@ -1359,40 +1668,68 @@ function applyFilters(){
                         r.responsavel
                     )
                 )
+
             );
+
         });
 
     currentPage = 1;
+
     renderAll();
+
 }
 
 
 function clearFilters(){
-    const multiFilterIds = [
-        'segmento',
-        'tipoOperacao',
-        'status',
-        'depositoLogico',
-        'responsavel'
-    ];
 
     document
-        .querySelectorAll('.filters select')
+        .querySelectorAll(
+            '.filters select'
+        )
         .forEach(e => {
-            if(multiFilterIds.includes(e.id)){
+
+            if(
+                [
+                    'segmento',
+                    'tipoOperacao',
+                    'status',
+                    'depositoLogico',
+                    'responsavel'
+                ].includes(
+                    e.id
+                )
+            ){
+
                 Array.from(
                     e.options
-                ).forEach(option => {
-                    option.selected = false;
-                });
+                ).forEach(
+                    option =>
+                        option.selected = false
+                );
+
             }else{
+
                 e.value = '';
+
             }
+
         });
 
+    MULTI_FILTER_IDS.forEach(id => {
+        const select = $(id);
+        if(select){
+            updateMultiSelect(select);
+        }
+    });
+
     applyFilters();
+
 }
 
+
+/* =========================================================
+   GRÁFICOS
+   ========================================================= */
 
 function commonScales(){
 
@@ -2719,17 +3056,7 @@ async function loadData(){
 
                 previousFilters[
                     select.id
-                ] = select.multiple
-                    ? Array.from(
-                        select.selectedOptions
-                    ).map(
-                        option =>
-                            option.value
-                    ).filter(
-                        value =>
-                            value !== ''
-                    )
-                    : select.value;
+                ] = select.value;
 
             }
         );
@@ -2746,73 +3073,37 @@ async function loadData(){
             'data/';
 
         /*
-         * Consulta o manifesto primeiro para obter uma
-         * versão real dos dados publicados.
+         * Impede o navegador de utilizar
+         * uma versão antiga do arquivo.
          */
-        const manifestBust =
+        const bust =
             `?v=${Date.now()}`;
 
-        const mr =
-            await fetch(
-                base +
-                'manifest.json' +
-                manifestBust,
-                {
-                    cache:'no-store',
-                    headers:{
-                        'Cache-Control':'no-cache, no-store, max-age=0'
+        const [
+            dr,
+            mr
+        ] =
+            await Promise.all([
+
+                fetch(
+                    base +
+                    'ordens_santana.json.gz' +
+                    bust,
+                    {
+                        cache:'no-store'
                     }
-                }
-            );
+                ),
 
-        if(!mr.ok){
-
-            throw new Error(
-                `HTTP ${mr.status} ao carregar o manifesto`
-            );
-
-        }
-
-        let manifest = {};
-
-        try{
-
-            manifest =
-                await mr.json();
-
-        }catch{
-
-            throw new Error(
-                'O manifest.json não contém um JSON válido.'
-            );
-
-        }
-
-        const version =
-            manifest.atualizado_em ||
-            manifest.gerado_em ||
-            manifest.ultima_modificacao_arquivo ||
-            Date.now();
-
-        /*
-         * A versão do manifest é combinada com Date.now()
-         * para impedir cache do JSON.GZ.
-         */
-        const dataBust =
-            `?v=${encodeURIComponent(version)}-${Date.now()}`;
-
-        const dr =
-            await fetch(
-                base +
-                'ordens_santana.json.gz' +
-                dataBust,
-                {
-                    cache:'no-store',
-                    headers:{
-                        'Cache-Control':'no-cache, no-store, max-age=0'
+                fetch(
+                    base +
+                    'manifest.json' +
+                    bust,
+                    {
+                        cache:'no-store'
                     }
-                }
-            );
+                )
+
+            ]);
 
         if(!dr.ok){
 
@@ -2912,9 +3203,16 @@ async function loadData(){
 
 
         /*
-         * O manifesto já foi carregado e validado
-         * antes do JSON.GZ.
+         * Lê o manifesto.
          */
+        let manifest = {};
+
+        if(mr.ok){
+
+            manifest =
+                await mr.json();
+
+        }
 
 
         $('sourceText').textContent =
