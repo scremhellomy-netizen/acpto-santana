@@ -227,12 +227,6 @@ select:focus{
     min-height:350px
 }
 
-/* Ranking de responsáveis deve ocupar a mesma largura das tabelas abaixo. */
-.chart-card.ranking-wide{
-    grid-column:1 / -1;
-    width:100%;
-}
-
 .chart-title{
     font-weight:800;
     font-size:15px;
@@ -573,17 +567,6 @@ select:focus{
         grid-template-columns:1fr
     }
 }
-
-/* Filtros com seleção múltipla */
-.filters select[multiple]{
-    min-height: 38px;
-    cursor: pointer;
-}
-
-.filters select[multiple] option:checked{
-    font-weight: 700;
-}
-
 </style>
 </head>
 
@@ -634,7 +617,7 @@ Fonte: carregando dados...
 
 <div class="filters">
 
-<select id="segmento" multiple size="1">
+<select id="segmento">
 <option value="">Todas as segmentações</option>
 </select>
 
@@ -642,7 +625,7 @@ Fonte: carregando dados...
 <option value="">Todos os canais digitais</option>
 </select>
 
-<select id="tipoOperacao" multiple size="1">
+<select id="tipoOperacao">
 <option value="">Todos os tipos de operação</option>
 </select>
 
@@ -658,11 +641,11 @@ Fonte: carregando dados...
 <option value="">Todas as condições de entrega</option>
 </select>
 
-<select id="status" multiple size="1">
+<select id="status">
 <option value="">Todos os status do pedido</option>
 </select>
 
-<select id="depositoLogico" multiple size="1">
+<select id="depositoLogico">
 <option value="">Todos os depósitos lógicos</option>
 </select>
 
@@ -670,7 +653,7 @@ Fonte: carregando dados...
 <option value="">Todos os tipos de devolução</option>
 </select>
 
-<select id="responsavel" multiple size="1">
+<select id="responsavel">
 <option value="">Todos os responsáveis</option>
 </select>
 
@@ -784,7 +767,7 @@ Ordens por Nome2, considerado como transportadora conforme regra definida
 
 </div>
 
-<div class="card chart-card ranking-wide">
+<div class="card chart-card wide">
 
 <div class="chart-title">
 Ranking de responsáveis
@@ -1090,14 +1073,6 @@ function populateSelect(id,values){
 
 function setupFilters(previousFilters = {}){
 
-    const multiFilterIds = new Set([
-        'segmento',
-        'tipoOperacao',
-        'status',
-        'depositoLogico',
-        'responsavel'
-    ]);
-
     populateSelect(
         'segmento',
         uniqueSorted(
@@ -1181,6 +1156,12 @@ function setupFilters(previousFilters = {}){
         )
     );
 
+
+    /*
+     * Restaura os filtros que estavam
+     * selecionados antes da atualização.
+     */
+
     document
         .querySelectorAll(
             '.filters select'
@@ -1193,52 +1174,32 @@ function setupFilters(previousFilters = {}){
                 ];
 
             if(
-                multiFilterIds.has(
-                    select.id
+                previousValue &&
+                Array.from(
+                    select.options
+                ).some(
+                    option =>
+                        option.value ===
+                        previousValue
                 )
             ){
 
-                const values =
-                    Array.isArray(
-                        previousValue
-                    )
-                        ? previousValue
-                        : (
-                            previousValue
-                                ? [previousValue]
-                                : []
-                        );
-
-                Array.from(
-                    select.options
-                ).forEach(option => {
-                    option.selected =
-                        values.includes(
-                            option.value
-                        );
-                });
+                select.value =
+                    previousValue;
 
             }else{
 
-                if(
-                    previousValue &&
-                    Array.from(
-                        select.options
-                    ).some(
-                        option =>
-                            option.value ===
-                            previousValue
-                    )
-                ){
-                    select.value =
-                        previousValue;
-                }else{
-                    select.value = '';
-                }
+                select.value = '';
 
             }
 
         });
+
+
+    /*
+     * Evita duplicação dos eventos
+     * dos filtros.
+     */
 
     document
         .querySelectorAll(
@@ -1265,131 +1226,77 @@ function applyFilters(){
 
     const f = {};
 
-    const multiFilterIds = new Set([
-        'segmento',
-        'tipoOperacao',
-        'status',
-        'depositoLogico',
-        'responsavel'
-    ]);
-
     document
         .querySelectorAll(
             '.filters select'
         )
-        .forEach(e => {
-
-            if(
-                multiFilterIds.has(
-                    e.id
-                )
-            ){
-                f[e.id] =
-                    Array.from(
-                        e.selectedOptions
-                    )
-                    .map(
-                        option =>
-                            option.value
-                    )
-                    .filter(
-                        value =>
-                            value !== ''
-                    );
-            }else{
-                f[e.id] =
-                    e.value;
-            }
-
-        });
+        .forEach(
+            e =>
+                f[e.id] = e.value
+        );
 
     filtered =
         allRows.filter(r => {
 
             return (
 
-                (
-                    !f.segmento.length ||
-                    f.segmento.includes(
-                        r.segmento
-                    )
-                )
+                (!f.segmento ||
+                    r.segmento ===
+                    f.segmento)
 
                 &&
 
-                (
-                    !f.canalDigital ||
+                (!f.canalDigital ||
                     r.canalDigital ===
-                    f.canalDigital
-                )
+                    f.canalDigital)
 
                 &&
 
-                (
-                    !f.tipoOperacao.length ||
-                    f.tipoOperacao.includes(
-                        r.tipoOperacao
-                    )
-                )
+                (!f.tipoOperacao ||
+                    r.tipoOperacao ===
+                    f.tipoOperacao)
 
                 &&
 
-                (
-                    !f.mes ||
+                (!f.mes ||
                     r.mesMapa ===
-                    f.mes
-                )
+                    f.mes)
 
                 &&
 
-                (
-                    !f.transportadora ||
+                (!f.transportadora ||
                     r.transportadora ===
-                    f.transportadora
-                )
+                    f.transportadora)
 
                 &&
 
-                (
-                    !f.condicaoEntrega ||
+                (!f.condicaoEntrega ||
                     r.condicaoEntrega ===
-                    f.condicaoEntrega
-                )
+                    f.condicaoEntrega)
 
                 &&
 
-                (
-                    !f.status.length ||
-                    f.status.includes(
-                        r.status
-                    )
-                )
+                (!f.status ||
+                    r.status ===
+                    f.status)
 
                 &&
 
-                (
-                    !f.depositoLogico.length ||
-                    f.depositoLogico.includes(
-                        r.depositoLogico
-                    )
-                )
+                (!f.depositoLogico ||
+                    r.depositoLogico ===
+                    f.depositoLogico)
 
                 &&
 
-                (
-                    !f.devolucao ||
+                (!f.devolucao ||
                     r.devolucao ===
-                    f.devolucao
-                )
+                    f.devolucao)
 
                 &&
 
-                (
-                    !f.responsavel.length ||
-                    f.responsavel.includes(
-                        r.responsavel
-                    )
-                )
+                (!f.responsavel ||
+                    r.responsavel ===
+                    f.responsavel)
 
             );
 
@@ -1408,34 +1315,10 @@ function clearFilters(){
         .querySelectorAll(
             '.filters select'
         )
-        .forEach(e => {
-
-            if(
-                [
-                    'segmento',
-                    'tipoOperacao',
-                    'status',
-                    'depositoLogico',
-                    'responsavel'
-                ].includes(
-                    e.id
-                )
-            ){
-
-                Array.from(
-                    e.options
-                ).forEach(
-                    option =>
-                        option.selected = false
-                );
-
-            }else{
-
-                e.value = '';
-
-            }
-
-        });
+        .forEach(
+            e =>
+                e.value = ''
+        );
 
     applyFilters();
 
@@ -1444,9 +1327,6 @@ function clearFilters(){
 
 /* =========================================================
    GRÁFICOS
-   ========================================================= */
-
-
    ========================================================= */
 
 function commonScales(){
@@ -2791,37 +2671,73 @@ async function loadData(){
             'data/';
 
         /*
-         * Impede o navegador de utilizar
-         * uma versão antiga do arquivo.
+         * Consulta o manifesto primeiro para obter uma
+         * versão real dos dados publicados.
          */
-        const bust =
+        const manifestBust =
             `?v=${Date.now()}`;
 
-        const [
-            dr,
-            mr
-        ] =
-            await Promise.all([
-
-                fetch(
-                    base +
-                    'ordens_santana.json.gz' +
-                    bust,
-                    {
-                        cache:'no-store'
+        const mr =
+            await fetch(
+                base +
+                'manifest.json' +
+                manifestBust,
+                {
+                    cache:'no-store',
+                    headers:{
+                        'Cache-Control':'no-cache, no-store, max-age=0'
                     }
-                ),
+                }
+            );
 
-                fetch(
-                    base +
-                    'manifest.json' +
-                    bust,
-                    {
-                        cache:'no-store'
+        if(!mr.ok){
+
+            throw new Error(
+                `HTTP ${mr.status} ao carregar o manifesto`
+            );
+
+        }
+
+        let manifest = {};
+
+        try{
+
+            manifest =
+                await mr.json();
+
+        }catch{
+
+            throw new Error(
+                'O manifest.json não contém um JSON válido.'
+            );
+
+        }
+
+        const version =
+            manifest.atualizado_em ||
+            manifest.gerado_em ||
+            manifest.ultima_modificacao_arquivo ||
+            Date.now();
+
+        /*
+         * A versão do manifest é combinada com Date.now()
+         * para impedir cache do JSON.GZ.
+         */
+        const dataBust =
+            `?v=${encodeURIComponent(version)}-${Date.now()}`;
+
+        const dr =
+            await fetch(
+                base +
+                'ordens_santana.json.gz' +
+                dataBust,
+                {
+                    cache:'no-store',
+                    headers:{
+                        'Cache-Control':'no-cache, no-store, max-age=0'
                     }
-                )
-
-            ]);
+                }
+            );
 
         if(!dr.ok){
 
@@ -2921,16 +2837,9 @@ async function loadData(){
 
 
         /*
-         * Lê o manifesto.
+         * O manifesto já foi carregado e validado
+         * antes do JSON.GZ.
          */
-        let manifest = {};
-
-        if(mr.ok){
-
-            manifest =
-                await mr.json();
-
-        }
 
 
         $('sourceText').textContent =
