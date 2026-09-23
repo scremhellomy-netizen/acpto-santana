@@ -3046,17 +3046,14 @@ loadData();
 
 
 /*
- * Reconsulta o JSON a cada 5 minutos.
- *
- * Os filtros selecionados são preservados
- * durante essa atualização.
+ * Atualização automática desativada.
+ * Os dados serão atualizados somente quando
+ * o usuário clicar no botão "Atualizar dados".
  */
-autoRefreshTimer =
-    setInterval(
-        () =>
-            refreshData(),
-        5 * 60 * 1000
-    );
+if(autoRefreshTimer){
+    clearInterval(autoRefreshTimer);
+    autoRefreshTimer = null;
+}
 
 </script>
 
