@@ -573,6 +573,136 @@ select:focus{
         grid-template-columns:1fr
     }
 }
+
+/* =========================================================
+   MULTI-SELEÇÃO PERSONALIZADA
+   ========================================================= */
+
+.multi-select{
+    position:relative;
+    width:100%;
+}
+
+.multi-select > select.multi-source{
+    display:none !important;
+}
+
+.multi-select-control{
+    width:100%;
+    min-height:38px;
+    padding:8px 12px;
+    border:1px solid var(--border);
+    border-radius:8px;
+    background:var(--panel);
+    color:var(--text);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    cursor:pointer;
+    font:inherit;
+    font-size:12px;
+    text-align:left;
+}
+
+.multi-select-control:hover{
+    border-color:var(--accent);
+}
+
+.multi-select-label{
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.multi-select-arrow{
+    opacity:.75;
+    flex:none;
+}
+
+.multi-select.open .multi-select-arrow{
+    transform:rotate(180deg);
+}
+
+.multi-select-menu{
+    display:none;
+    position:absolute;
+    left:0;
+    right:0;
+    top:calc(100% + 5px);
+    z-index:1000;
+    max-height:300px;
+    overflow:auto;
+    padding:6px;
+    border:1px solid var(--border);
+    border-radius:8px;
+    background:var(--panel);
+    box-shadow:0 12px 30px rgba(0,0,0,.28);
+}
+
+.multi-select.open .multi-select-menu{
+    display:block;
+}
+
+.multi-select-actions{
+    position:sticky;
+    top:0;
+    z-index:2;
+    display:flex;
+    gap:6px;
+    padding:2px 0 7px;
+    margin-bottom:5px;
+    background:var(--panel);
+    border-bottom:1px solid var(--border);
+}
+
+.multi-select-action{
+    flex:1;
+    min-height:30px;
+    border:1px solid var(--border);
+    border-radius:6px;
+    background:var(--panel2);
+    color:var(--text);
+    cursor:pointer;
+    font:inherit;
+    font-size:11px;
+    font-weight:700;
+}
+
+.multi-select-action:hover{
+    border-color:var(--accent);
+    color:var(--text);
+    background:rgba(4,100,252,.12);
+}
+
+.multi-option{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:7px 8px;
+    border-radius:6px;
+    cursor:pointer;
+    color:var(--text);
+    font-size:12px;
+}
+
+.multi-option:hover{
+    background:rgba(4,100,252,.10);
+}
+
+.multi-option input{
+    width:15px;
+    height:15px;
+    accent-color:var(--accent);
+    cursor:pointer;
+}
+
+.multi-select-empty{
+    padding:10px;
+    color:var(--muted);
+    font-size:12px;
+}
+
 </style>
 </head>
 
@@ -1077,141 +1207,435 @@ function populateSelect(id,values){
    FILTROS
    ========================================================= */
 
+function initMultiSelect(select){
+
+    if(select.dataset.multiReady === 'true'){
+        updateMultiSelect(select);
+        return;
+    }
+
+    const wrapper =
+        document.createElement('div');
+
+    wrapper.className =
+        'multi-select';
+
+    select.parentNode.insertBefore(
+        wrapper,
+        select
+    );
+
+    wrapper.appendChild(select);
+
+    select.classList.add('multi-source');
+
+    select.dataset.multiReady = 'true';
+
+    const button =
+        document.createElement('button');
+
+    button.type = 'button';
+    button.className = 'multi-select-control';
+
+    const label =
+        document.createElement('span');
+
+    label.className =
+        'multi-select-label';
+
+    const arrow =
+        document.createElement('span');
+
+    arrow.className =
+        'multi-select-arrow';
+
+    arrow.textContent = '⌄';
+
+    button.appendChild(label);
+    button.appendChild(arrow);
+
+    const menu =
+        document.createElement('div');
+
+    menu.className =
+        'multi-select-menu';
+
+    menu.addEventListener(
+        'click',
+        event => event.stopPropagation()
+    );
+
+    wrapper.appendChild(button);
+    wrapper.appendChild(menu);
+
+    button.addEventListener(
+        'click',
+        event => {
+
+            event.preventDefault();
+            event.stopPropagation();
+
+            document
+                .querySelectorAll('.multi-select.open')
+                .forEach(other => {
+
+                    if(other !== wrapper){
+                        other.classList.remove('open');
+                    }
+
+                });
+
+            wrapper.classList.toggle('open');
+
+        }
+    );
+
+    updateMultiSelect(select);
+}
+
+
+function updateMultiSelect(select){
+
+    const wrapper =
+        select.closest('.multi-select');
+
+    if(!wrapper){
+        return;
+    }
+
+    const button =
+        wrapper.querySelector(
+            '.multi-select-control'
+        );
+
+    const menu =
+        wrapper.querySelector(
+            '.multi-select-menu'
+        );
+
+    if(!button || !menu){
+        return;
+    }
+
+    const wasOpen =
+        wrapper.classList.contains('open');
+
+    menu.innerHTML = '';
+
+    const options =
+        Array.from(select.options)
+            .filter(option =>
+                option.value !== ''
+            );
+
+    const actions =
+        document.createElement('div');
+
+    actions.className =
+        'multi-select-actions';
+
+    const selectAllBtn =
+        document.createElement('button');
+
+    selectAllBtn.type = 'button';
+    selectAllBtn.className =
+        'multi-select-action';
+
+    selectAllBtn.textContent =
+        'Selecionar todos';
+
+    const clearBtn =
+        document.createElement('button');
+
+    clearBtn.type = 'button';
+    clearBtn.className =
+        'multi-select-action';
+
+    clearBtn.textContent =
+        'Limpar seleção';
+
+    selectAllBtn.addEventListener(
+        'click',
+        event => {
+
+            event.preventDefault();
+            event.stopPropagation();
+
+            options.forEach(
+                option =>
+                    option.selected = true
+            );
+
+            updateMultiSelect(select);
+            applyFilters();
+
+            wrapper.classList.add('open');
+
+        }
+    );
+
+    clearBtn.addEventListener(
+        'click',
+        event => {
+
+            event.preventDefault();
+            event.stopPropagation();
+
+            options.forEach(
+                option =>
+                    option.selected = false
+            );
+
+            updateMultiSelect(select);
+            applyFilters();
+
+            wrapper.classList.add('open');
+
+        }
+    );
+
+    actions.appendChild(selectAllBtn);
+    actions.appendChild(clearBtn);
+
+    menu.appendChild(actions);
+
+    options.forEach(option => {
+
+        const item =
+            document.createElement('label');
+
+        item.className =
+            'multi-option';
+
+        const checkbox =
+            document.createElement('input');
+
+        checkbox.type = 'checkbox';
+        checkbox.checked =
+            option.selected;
+
+        const text =
+            document.createElement('span');
+
+        text.textContent =
+            option.textContent;
+
+        checkbox.addEventListener(
+            'click',
+            event =>
+                event.stopPropagation()
+        );
+
+        checkbox.addEventListener(
+            'change',
+            event => {
+
+                event.stopPropagation();
+
+                option.selected =
+                    checkbox.checked;
+
+                updateMultiSelect(select);
+                applyFilters();
+
+                wrapper.classList.add('open');
+
+            }
+        );
+
+        item.addEventListener(
+            'click',
+            event =>
+                event.stopPropagation()
+        );
+
+        item.appendChild(checkbox);
+        item.appendChild(text);
+
+        menu.appendChild(item);
+
+    });
+
+    const selected =
+        Array.from(select.selectedOptions)
+            .filter(option =>
+                option.value !== ''
+            );
+
+    const defaultText =
+        select.options[0]?.textContent ||
+        'Selecionar';
+
+    let summary;
+
+    if(
+        selected.length === 0 ||
+        selected.length === options.length
+    ){
+
+        summary = defaultText;
+
+    }else if(
+        selected.length === 1
+    ){
+
+        summary = '1 selecionado';
+
+    }else{
+
+        summary =
+            `${selected.length} selecionados`;
+
+    }
+
+    const label =
+        button.querySelector(
+            '.multi-select-label'
+        );
+
+    if(label){
+        label.textContent = summary;
+    }
+
+    if(wasOpen){
+        wrapper.classList.add('open');
+    }
+
+}
+
+
 function setupFilters(previousFilters = {}){
+
+    const MULTI_FILTER_IDS = new Set([
+        'segmento',
+        'tipoOperacao',
+        'status',
+        'depositoLogico',
+        'responsavel'
+    ]);
 
     populateSelect(
         'segmento',
-        uniqueSorted(
-            allRows,
-            'segmento'
-        )
+        uniqueSorted(allRows,'segmento')
     );
 
     populateSelect(
         'canalDigital',
-        uniqueSorted(
-            allRows,
-            'canalDigital'
-        )
+        uniqueSorted(allRows,'canalDigital')
     );
 
     populateSelect(
         'tipoOperacao',
-        uniqueSorted(
-            allRows,
-            'tipoOperacao'
-        )
+        uniqueSorted(allRows,'tipoOperacao')
     );
 
     populateSelect(
         'mes',
         monthNames.filter(
-            m =>
-                allRows.some(
-                    r =>
-                        r.mesMapa === m
-                )
+            m => allRows.some(r => r.mesMapa === m)
         )
     );
 
     populateSelect(
         'transportadora',
-        uniqueSorted(
-            allRows,
-            'transportadora'
-        )
+        uniqueSorted(allRows,'transportadora')
     );
 
     populateSelect(
         'condicaoEntrega',
-        uniqueSorted(
-            allRows,
-            'condicaoEntrega'
-        )
+        uniqueSorted(allRows,'condicaoEntrega')
     );
 
     populateSelect(
         'status',
-        uniqueSorted(
-            allRows,
-            'status'
-        )
+        uniqueSorted(allRows,'status')
     );
 
     populateSelect(
         'depositoLogico',
-        uniqueSorted(
-            allRows,
-            'depositoLogico'
-        )
+        uniqueSorted(allRows,'depositoLogico')
     );
 
     populateSelect(
         'devolucao',
-        uniqueSorted(
-            allRows,
-            'devolucao'
-        )
+        uniqueSorted(allRows,'devolucao')
     );
 
     populateSelect(
         'responsavel',
-        uniqueSorted(
-            allRows,
-            'responsavel'
-        )
+        uniqueSorted(allRows,'responsavel')
     );
 
-
     /*
-     * Restaura os filtros que estavam
-     * selecionados antes da atualização.
+     * Restaura as seleções anteriores.
+     * Filtros multi-seleção recebem arrays;
+     * filtros comuns recebem uma string.
      */
-
     document
-        .querySelectorAll(
-            '.filters select'
-        )
+        .querySelectorAll('.filters select')
         .forEach(select => {
 
-            const previousValue =
-                previousFilters[
-                    select.id
-                ];
+            const previous =
+                previousFilters[select.id];
 
-            if(
-                previousValue &&
-                Array.from(
-                    select.options
-                ).some(
-                    option =>
-                        option.value ===
-                        previousValue
-                )
-            ){
+            if(MULTI_FILTER_IDS.has(select.id)){
 
-                select.value =
-                    previousValue;
+                const values =
+                    Array.isArray(previous)
+                        ? previous
+                        : (
+                            previous
+                                ? [previous]
+                                : []
+                        );
+
+                Array.from(select.options)
+                    .forEach(option => {
+                        option.selected =
+                            values.includes(option.value);
+                    });
 
             }else{
 
-                select.value = '';
+                select.value =
+                    previous || '';
 
             }
 
         });
 
+    /*
+     * Converte os cinco filtros para o
+     * componente visual de multi-seleção.
+     */
+    document
+        .querySelectorAll('.filters select')
+        .forEach(select => {
+
+            if(MULTI_FILTER_IDS.has(select.id)){
+
+                select.multiple = true;
+
+                initMultiSelect(select);
+
+                updateMultiSelect(select);
+
+            }
+
+        });
 
     /*
-     * Evita duplicação dos eventos
-     * dos filtros.
+     * Eventos dos filtros comuns.
+     * Nos multi-selects o evento é tratado
+     * pelo componente visual.
      */
-
     document
-        .querySelectorAll(
-            '.filters select'
-        )
+        .querySelectorAll('.filters select')
         .forEach(select => {
+
+            if(MULTI_FILTER_IDS.has(select.id)){
+                return;
+            }
 
             select.removeEventListener(
                 'change',
@@ -1227,82 +1651,102 @@ function setupFilters(previousFilters = {}){
 
 }
 
-
 function applyFilters(){
+
+    const MULTI_FILTER_IDS = new Set([
+        'segmento',
+        'tipoOperacao',
+        'status',
+        'depositoLogico',
+        'responsavel'
+    ]);
 
     const f = {};
 
     document
-        .querySelectorAll(
-            '.filters select'
-        )
-        .forEach(
-            e =>
-                f[e.id] = e.value
-        );
+        .querySelectorAll('.filters select')
+        .forEach(select => {
+
+            if(MULTI_FILTER_IDS.has(select.id)){
+
+                f[select.id] =
+                    Array.from(select.selectedOptions)
+                        .map(option => option.value)
+                        .filter(Boolean);
+
+            }else{
+
+                f[select.id] =
+                    select.value;
+
+            }
+
+        });
 
     filtered =
         allRows.filter(r => {
 
+            const matchesMulti =
+                id =>
+                    !f[id]?.length ||
+                    f[id].includes(
+                        String(r[id] ?? '')
+                    );
+
             return (
 
-                (!f.segmento ||
-                    r.segmento ===
-                    f.segmento)
+                matchesMulti('segmento')
 
                 &&
 
-                (!f.canalDigital ||
-                    r.canalDigital ===
-                    f.canalDigital)
+                (
+                    !f.canalDigital ||
+                    r.canalDigital === f.canalDigital
+                )
 
                 &&
 
-                (!f.tipoOperacao ||
-                    r.tipoOperacao ===
-                    f.tipoOperacao)
+                matchesMulti('tipoOperacao')
 
                 &&
 
-                (!f.mes ||
-                    r.mesMapa ===
-                    f.mes)
+                (
+                    !f.mes ||
+                    r.mesMapa === f.mes
+                )
 
                 &&
 
-                (!f.transportadora ||
-                    r.transportadora ===
-                    f.transportadora)
+                (
+                    !f.transportadora ||
+                    r.transportadora === f.transportadora
+                )
 
                 &&
 
-                (!f.condicaoEntrega ||
-                    r.condicaoEntrega ===
-                    f.condicaoEntrega)
+                (
+                    !f.condicaoEntrega ||
+                    r.condicaoEntrega === f.condicaoEntrega
+                )
 
                 &&
 
-                (!f.status ||
-                    r.status ===
-                    f.status)
+                matchesMulti('status')
 
                 &&
 
-                (!f.depositoLogico ||
-                    r.depositoLogico ===
-                    f.depositoLogico)
+                matchesMulti('depositoLogico')
 
                 &&
 
-                (!f.devolucao ||
-                    r.devolucao ===
-                    f.devolucao)
+                (
+                    !f.devolucao ||
+                    r.devolucao === f.devolucao
+                )
 
                 &&
 
-                (!f.responsavel ||
-                    r.responsavel ===
-                    f.responsavel)
+                matchesMulti('responsavel')
 
             );
 
@@ -1314,22 +1758,40 @@ function applyFilters(){
 
 }
 
-
 function clearFilters(){
 
+    const MULTI_FILTER_IDS = new Set([
+        'segmento',
+        'tipoOperacao',
+        'status',
+        'depositoLogico',
+        'responsavel'
+    ]);
+
     document
-        .querySelectorAll(
-            '.filters select'
-        )
-        .forEach(
-            e =>
-                e.value = ''
-        );
+        .querySelectorAll('.filters select')
+        .forEach(select => {
+
+            if(MULTI_FILTER_IDS.has(select.id)){
+
+                Array.from(select.options)
+                    .forEach(option => {
+                        option.selected = false;
+                    });
+
+                updateMultiSelect(select);
+
+            }else{
+
+                select.value = '';
+
+            }
+
+        });
 
     applyFilters();
 
 }
-
 
 /* =========================================================
    GRÁFICOS
@@ -2915,7 +3377,6 @@ async function loadData(){
 
 let loading = false;
 
-let autoRefreshTimer = null;
 
 
 async function refreshData(){
@@ -3038,22 +3499,24 @@ $('themeBtn')
     );
 
 
+document.addEventListener(
+    'click',
+    () => {
+
+        document
+            .querySelectorAll('.multi-select.open')
+            .forEach(wrapper =>
+                wrapper.classList.remove('open')
+            );
+
+    }
+);
+
 /* =========================================================
    PRIMEIRO CARREGAMENTO
    ========================================================= */
 
 loadData();
-
-
-/*
- * Atualização automática desativada.
- * Os dados serão atualizados somente quando
- * o usuário clicar no botão "Atualizar dados".
- */
-if(autoRefreshTimer){
-    clearInterval(autoRefreshTimer);
-    autoRefreshTimer = null;
-}
 
 </script>
 
