@@ -1,13 +1,13 @@
 {
-  "atualizado_em": "2026-09-22T21:39:28.747740+00:00",
-  "arquivo_origem": "1 - Acpto de ordens - Santana(1).xlsx",
-  "caminho_origem": "/mnt/data/source_current/1 - Acpto de ordens - Santana(1).xlsx",
+  "atualizado_em": "2026-09-23T08:12:01.445253-03:00",
+  "arquivo_origem": "1 - Acpto de ordens - Santana.xlsx",
+  "caminho_origem": "C:\\Users\\rlxjunior\\Documents\\Dados - Acompanhamento de Ordens\\ACPTO_SANTANA_DASHBOARD\\ACPTO_SANTANA\\1 - Acpto de ordens - Santana.xlsx",
   "aba_origem": "Principal",
-  "ultima_modificacao_arquivo": "2026-09-22T21:31:44.769988+00:00",
-  "registros": 25989,
-  "unidades": 68225.0,
+  "ultima_modificacao_arquivo": "2026-09-23T07:47:54.812998-03:00",
+  "registros": 26106,
+  "unidades": 68350.0,
   "devolucoes": 323,
-  "datas_validas": 25989,
+  "datas_validas": 26106,
   "responsaveis": 53,
   "transportadoras": 2,
   "status_distintos": 10,
@@ -18,13 +18,13 @@
   "validacao": {
     "estrutura_ok": true,
     "json_reaberto_com_sucesso": true,
-    "registros_json": 25989,
-    "datas_validas": 25989,
+    "registros_json": 26106,
+    "datas_validas": 26106,
     "datas_invalidas": 0,
     "quantidades_invalidas": 0,
     "linhas_em_ordens_duplicadas": 0,
     "avisos": [
-      "K - Quantidade: 1,058 células vazias."
+      "K - Quantidade: 1,063 células vazias."
     ]
   },
   "mapeamento": {
