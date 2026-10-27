@@ -1,30 +1,31 @@
 {
-  "atualizado_em": "2026-09-24T08:20:54.967402-03:00",
+  "atualizado_em": "2026-10-27T10:49:29.183188-03:00",
   "arquivo_origem": "1 - Acpto de ordens - Santana.xlsx",
   "caminho_origem": "C:\\Users\\rlxjunior\\Documents\\Dados - Acompanhamento de Ordens\\ACPTO_SANTANA_DASHBOARD\\ACPTO_SANTANA\\1 - Acpto de ordens - Santana.xlsx",
   "aba_origem": "Principal",
-  "ultima_modificacao_arquivo": "2026-09-23T07:47:54.812998-03:00",
-  "registros": 26106,
-  "unidades": 68350.0,
-  "devolucoes": 323,
-  "datas_validas": 26106,
-  "responsaveis": 53,
-  "transportadoras": 2,
+  "ultima_modificacao_arquivo": "2026-10-27T10:42:58.174777-03:00",
+  "registros": 55286,
+  "unidades": 171671.0,
+  "devolucoes": 2895,
+  "datas_validas": 55286,
+  "responsaveis": 54,
+  "transportadoras": 83,
   "status_distintos": 10,
-  "tipos_operacao_distintos": 35,
+  "tipos_operacao_distintos": 51,
   "colunas_origem": 86,
   "arquivo_dados": "ordens_santana.json.gz",
   "observacao": "Somente a aba Principal é considerada. As demais abas, inclusive ocultas, são ignoradas.",
   "validacao": {
     "estrutura_ok": true,
     "json_reaberto_com_sucesso": true,
-    "registros_json": 26106,
-    "datas_validas": 26106,
+    "registros_json": 55286,
+    "datas_validas": 55286,
     "datas_invalidas": 0,
     "quantidades_invalidas": 0,
     "linhas_em_ordens_duplicadas": 0,
     "avisos": [
-      "K - Quantidade: 1,063 células vazias."
+      "K - Quantidade: 967 células vazias.",
+      "CH - Responsável: 370 células vazias."
     ]
   },
   "mapeamento": {
